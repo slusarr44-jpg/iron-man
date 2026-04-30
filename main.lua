@@ -1,11 +1,11 @@
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 
--- СОЗДАНИЕ ИНТЕРФЕЙСА (Белый, прозрачный)
+-- ИНТЕРФЕЙС (Белый, прозрачный)
 local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local frame = Instance.new("Frame", sg)
-frame.Size = UDim2.new(0, 200, 0, 150)
-frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+frame.Size = UDim2.new(0, 220, 0, 130)
+frame.Position = UDim2.new(0.5, -110, 0.5, -65)
 frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 frame.BackgroundTransparency = 0.4
 frame.Active = true
@@ -13,57 +13,39 @@ frame.Draggable = true
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 30)
-title.Text = "RUSTAM HUB"
+title.Text = "RUSTAM - NO COOLDOWN"
 title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(0, 0, 0)
 
-local status = Instance.new("TextLabel", frame)
-status.Size = UDim2.new(1, 0, 0, 30)
-status.Position = UDim2.new(0, 0, 0.3, 0)
-status.Text = "GodMode: OFF"
-status.BackgroundTransparency = 1
+local cdBtn = Instance.new("TextButton", frame)
+cdBtn.Size = UDim2.new(0.9, 0, 0, 40)
+cdBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
+cdBtn.Text = "УБРАТЬ КД (COOLDOWN)"
+cdBtn.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
 
-local repairBtn = Instance.new("TextButton", frame)
-repairBtn.Size = UDim2.new(0.8, 0, 0, 40)
-repairBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
-repairBtn.Text = "ПОЧИНИТЬ ВСЁ"
-repairBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-
--- ЛОГИКА БЕССМЕРТИЯ (Чтобы не мигало и не убивало)
-local godActive = false
-task.spawn(function()
-    while true do
-        if godActive then
-            pcall(function()
-                local char = player.Character
-                if char and char:FindFirstChild("Humanoid") then
-                    -- Пытаемся заблокировать смерть
-                    if char.Humanoid.Health > 0 and char.Humanoid.Health < 100 then
-                        char.Humanoid.Health = 100
-                    elseif char.Humanoid.Health <= 0 then
-                        -- Если всё-таки умерли, пробуем воскреснуть на месте
-                        char.Humanoid.Health = 100
-                    end
-                end
-            end)
-        end
-        task.wait() -- Без задержки, чтобы сервер не успел
-    end
-end)
-
--- ЛОГИКА ПОЧИНКИ (Ищем костюм по всему серверу)
-repairBtn.MouseButton1Click:Connect(function()
-    godActive = not godActive
-    status.Text = godActive and "GodMode: ON" or "GodMode: OFF"
+-- ЛОГИКА УДАЛЕНИЯ КД
+cdBtn.MouseButton1Click:Connect(function()
+    print("Попытка сброса КД...")
     
-    print("Запуск тотальной починки...")
-    -- Ищем твой ник во всех объектах игры (даже если костюм не в персонаже)
-    for _, obj in pairs(game.Workspace:GetDescendants()) do
-        if obj.Name:find(player.Name) or obj:IsDescendantOf(player.Character) then
-            for _, val in pairs(obj:GetDescendants()) do
-                if val:IsA("NumberValue") or val:IsA("IntValue") then
-                    val.Value = 999999
-                end
+    -- 1. Обнуляем все цифровые таймеры в игроке
+    for _, v in pairs(player:GetDescendants()) do
+        if v:IsA("NumberValue") or v:IsA("IntValue") then
+            if v.Name:lower():find("cooldown") or v.Name:lower():find("timer") or v.Name:lower():find("wait") then
+                v.Value = 0
             end
         end
     end
+    
+    -- 2. Сбрасываем атрибуты (часто КД на смену костюма сидит тут)
+    local char = player.Character
+    if char then
+        for name, _ in pairs(char:GetAttributes()) do
+            if name:lower():find("cooldown") or name:lower():find("can") then
+                char:SetAttribute(name, 0)
+                char:SetAttribute("CanSpawn", true) -- Пытаемся разрешить спавн сразу
+            end
+        end
+    end
+    
+    print("КД сброшен (если он был локальным)!")
 end)
