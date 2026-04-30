@@ -1,74 +1,69 @@
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local PlayerInput = Instance.new("TextBox")
-local RepairBtn = Instance.new("TextButton")
-local GodModeBtn = Instance.new("TextButton")
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
 
--- Настройка интерфейса (Белый и Прозрачный)
-ScreenGui.Parent = game:GetService("CoreGui")
+-- СОЗДАНИЕ ИНТЕРФЕЙСА (Белый, прозрачный)
+local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+frame.BackgroundTransparency = 0.4
+frame.Active = true
+frame.Draggable = true
 
-MainFrame.Name = "IronManMenu"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-MainFrame.BackgroundTransparency = 0.3
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -75)
-MainFrame.Size = UDim2.new(0, 200, 0, 150)
-MainFrame.Active = true
-MainFrame.Draggable = true
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "RUSTAM HUB"
+title.BackgroundTransparency = 1
 
-Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "IRON MAN HUB"
-Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.fromRGB(0, 0, 0)
+local status = Instance.new("TextLabel", frame)
+status.Size = UDim2.new(1, 0, 0, 30)
+status.Position = UDim2.new(0, 0, 0.3, 0)
+status.Text = "GodMode: OFF"
+status.BackgroundTransparency = 1
 
-PlayerInput.Parent = MainFrame
-PlayerInput.PlaceholderText = "Ник игрока..."
-PlayerInput.Position = UDim2.new(0.1, 0, 0.3, 0)
-PlayerInput.Size = UDim2.new(0.8, 0, 0, 30)
-PlayerInput.Text = ""
+local repairBtn = Instance.new("TextButton", frame)
+repairBtn.Size = UDim2.new(0.8, 0, 0, 40)
+repairBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+repairBtn.Text = "ПОЧИНИТЬ ВСЁ"
+repairBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
 
-RepairBtn.Parent = MainFrame
-RepairBtn.Position = UDim2.new(0.1, 0, 0.55, 0)
-RepairBtn.Size = UDim2.new(0.8, 0, 0, 30)
-RepairBtn.Text = "ПОЧИНИТЬ МАРК"
-RepairBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-
-GodModeBtn.Parent = MainFrame
-GodModeBtn.Position = UDim2.new(0.1, 0, 0.8, 0)
-GodModeBtn.Size = UDim2.new(0.8, 0, 0, 30)
-GodModeBtn.Text = "GODMODE: OFF"
-GodModeBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-
--- Логика починки
-RepairBtn.MouseButton1Click:Connect(function()
-    local targetName = PlayerInput.Text
-    local targetPlayer = game.Players:FindFirstChild(targetName) or game.Players.LocalPlayer
-    
-    local char = targetPlayer.Character
-    if char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("NumberValue") or v:IsA("IntValue") then
-                v.Value = 999999
-            end
+-- ЛОГИКА БЕССМЕРТИЯ (Чтобы не мигало и не убивало)
+local godActive = false
+task.spawn(function()
+    while true do
+        if godActive then
+            pcall(function()
+                local char = player.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    -- Пытаемся заблокировать смерть
+                    if char.Humanoid.Health > 0 and char.Humanoid.Health < 100 then
+                        char.Humanoid.Health = 100
+                    elseif char.Humanoid.Health <= 0 then
+                        -- Если всё-таки умерли, пробуем воскреснуть на месте
+                        char.Humanoid.Health = 100
+                    end
+                end
+            end)
         end
-        print("Починка отправлена для: " .. targetPlayer.Name)
+        task.wait() -- Без задержки, чтобы сервер не успел
     end
 end)
 
--- Логика GodMode
-local godModeActive = false
-GodModeBtn.MouseButton1Click:Connect(function()
-    godModeActive = not godModeActive
-    GodModeBtn.Text = godModeActive and "GODMODE: ON" or "GODMODE: OFF"
+-- ЛОГИКА ПОЧИНКИ (Ищем костюм по всему серверу)
+repairBtn.MouseButton1Click:Connect(function()
+    godActive = not godActive
+    status.Text = godActive and "GodMode: ON" or "GodMode: OFF"
     
-    spawn(function()
-        while godModeActive do
-            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-                game.Players.LocalPlayer.Character.Humanoid.Health = 100
+    print("Запуск тотальной починки...")
+    -- Ищем твой ник во всех объектах игры (даже если костюм не в персонаже)
+    for _, obj in pairs(game.Workspace:GetDescendants()) do
+        if obj.Name:find(player.Name) or obj:IsDescendantOf(player.Character) then
+            for _, val in pairs(obj:GetDescendants()) do
+                if val:IsA("NumberValue") or val:IsA("IntValue") then
+                    val.Value = 999999
+                end
             end
-            task.wait(0.1)
         end
-    end)
+    end
 end)
