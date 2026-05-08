@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 15",
-   LoadingTitle = "ТЕСТ 15: TRUE GODMODE (0 HP)",
+   Name = "PlutoniumJus Experiment | ТЕСТ 17",
+   LoadingTitle = "ТЕСТ 17: FIX FLY RESET",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
@@ -10,27 +10,29 @@ local Window = Rayfield:CreateWindow({
 _G.FlyEnabled = false
 _G.GodMode = false
 
+local lp = game.Players.LocalPlayer
+
+local function getChar()
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    return char, char:WaitForChild("HumanoidRootPart"), char:WaitForChild("Humanoid")
+end
+
 local MainTab = Window:CreateTab("Main")
 
--- ТОТ САМЫЙ ПОЛЕТ (БЕЗ ИЗМЕНЕНИЙ)
+-- ИСПРАВЛЕННЫЙ ПОЛЕТ (СБРОС ФИЗИКИ ПРИ ВЫКЛЮЧЕНИИ)
 MainTab:CreateToggle({
-   Name = "NoClip-Полет (Клавиатура)",
+   Name = "NoClip-Полет (Фикс сброса)",
    CurrentValue = false,
    Callback = function(v)
       _G.FlyEnabled = v
-      local lp = game.Players.LocalPlayer
-      local runService = game:GetService("RunService")
-      local uis = game:GetService("UserInputService")
-      
       if _G.FlyEnabled then
          task.spawn(function()
             while _G.FlyEnabled do
-               local char = lp.Character
-               local hrp = char and char:FindFirstChild("HumanoidRootPart")
-               local hum = char and char:FindFirstChild("Humanoid")
+               local char, hrp, hum = getChar()
                local camera = workspace.CurrentCamera
+               local uis = game:GetService("UserInputService")
                
-               if hrp and hum then
+               if hrp and hum and _G.FlyEnabled then
                   for _, part in pairs(char:GetDescendants()) do
                      if part:IsA("BasePart") then part.CanCollide = false end
                   end
@@ -50,46 +52,45 @@ MainTab:CreateToggle({
                   local lookAt = camera.CFrame.LookVector
                   hrp.CFrame = CFrame.new(hrp.Position + (moveVec * 1.5) + Vector3.new(0, yMode, 0), hrp.Position + Vector3.new(lookAt.X, 0, lookAt.Z))
                end
-               runService.RenderStepped:Wait()
-            end
-            
-            if lp.Character then
-               for _, part in pairs(lp.Character:GetDescendants()) do
-                  if part:IsA("BasePart") then part.CanCollide = true end
-               end
+               game:GetService("RunService").RenderStepped:Wait()
             end
          end)
+      else
+         -- ПРИНУДИТЕЛЬНЫЙ СБРОС ФИЗИКИ ПРИ ВЫКЛЮЧЕНИИ
+         local char, hrp, hum = getChar()
+         if char then
+            for _, part in pairs(char:GetDescendants()) do
+               if part:IsA("BasePart") then part.CanCollide = true end
+            end
+            if hum then 
+               hum.PlatformStand = false
+               hum:ChangeState(Enum.HumanoidStateType.GettingUp) -- Заставляем встать
+            end
+         end
       end
    end,
 })
 
--- РЕАЛЬНОЕ БЕССМЕРТИЕ (КАК ТЫ ПРОСИЛ - 0 HP)
+-- РАБОЧИЙ GOD MODE (0 HP)
 MainTab:CreateToggle({
    Name = "Real God Mode (0 HP)",
    CurrentValue = false,
    Callback = function(v)
       _G.GodMode = v
-      local lp = game.Players.LocalPlayer
-      
       task.spawn(function()
          while _G.GodMode do
-            local char = lp.Character
-            local hum = char and char:FindFirstChild("Humanoid")
-            if hum then
-               hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false) -- Запрещаем умирать
-               hum.Health = 0 -- Ставим 0 ХП
+            local char, hrp, hum = getChar()
+            if hum and _G.GodMode then
+               hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+               hum.Health = 0
             end
-            task.wait()
-         end
-         -- Если выключил, ресет персонажа, чтобы вернуть ХП
-         if not _G.GodMode and lp.Character then
-            lp.Character:BreakJoints()
+            task.wait(0.1)
          end
       end)
    end,
 })
 
--- ВХ
+-- ESP
 MainTab:CreateToggle({
    Name = "ESP (ВХ)",
    CurrentValue = false,
@@ -98,7 +99,7 @@ MainTab:CreateToggle({
       task.spawn(function()
          while _G.ESP do
             for _, p in pairs(game.Players:GetPlayers()) do
-               if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
+               if p ~= lp and p.Character and not p.Character:FindFirstChild("Highlight") then
                   Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
                end
             end
