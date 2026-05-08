@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 10",
-   LoadingTitle = "ТЕСТ 10: FIX GODMODE",
+   Name = "PlutoniumJus Experiment | ТЕСТ 11",
+   LoadingTitle = "ТЕСТ 11: НОРМАЛЬНЫЙ ИНТЕРФЕЙС",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
@@ -13,18 +13,7 @@ _G.FlySpeed = 50
 
 local MainTab = Window:CreateTab("Main")
 
--- РЕГУЛИРОВКА СКОРОСТИ
-MainTab:CreateSlider({
-   Name = "Скорость полёта",
-   Min = 10,
-   Max = 300,
-   Default = 50,
-   Callback = function(v)
-      _G.FlySpeed = v
-   end,
-})
-
--- ПОЛЁТ КЛАВИАТУРОЙ (КАК ТЫ ХОТЕЛ)
+-- СНАЧАЛА ВКЛЮЧАЛКА
 MainTab:CreateToggle({
    Name = "NoClip-Полёт (Клавиатура)",
    CurrentValue = false,
@@ -38,12 +27,10 @@ MainTab:CreateToggle({
             local hum = char and char:FindFirstChild("Humanoid")
             
             if hrp and hum then
-               -- Сквозь стены
                for _, part in pairs(char:GetDescendants()) do
                   if part:IsA("BasePart") then part.CanCollide = false end
                end
                
-               -- Движение WASD
                local moveDir = hum.MoveDirection
                local velocity = moveDir * _G.FlySpeed
                local yVel = 0
@@ -58,7 +45,6 @@ MainTab:CreateToggle({
             end
             task.wait()
          end
-         -- Возврат коллизии
          if lp.Character then
             for _, part in pairs(lp.Character:GetDescendants()) do
                if part:IsA("BasePart") then part.CanCollide = true end
@@ -68,7 +54,18 @@ MainTab:CreateToggle({
    end,
 })
 
--- РЕАЛЬНОЕ БЕССМЕРТИЕ (HP = 0)
+-- ПОТОМ ПОЛОСКА (ОТ 0 ДО 100)
+MainTab:CreateSlider({
+   Name = "Скорость полёта",
+   Min = 0,
+   Max = 100,
+   Default = 50,
+   Callback = function(v)
+      _G.FlySpeed = v
+   end,
+})
+
+-- РЕАЛЬНОЕ БЕССМЕРТИЕ
 MainTab:CreateToggle({
    Name = "Real God Mode (0 HP)",
    CurrentValue = false,
@@ -80,14 +77,13 @@ MainTab:CreateToggle({
             while _G.GodMode do
                local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
                if hum then
-                  hum.Health = 0 -- Ставим 0, чтобы игра не могла нанести урон
-                  hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false) -- Запрещаем умирать
+                  hum.Health = 0 
+                  hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
                end
                task.wait()
             end
          end)
       else
-         -- Сброс персонажа при выключении, чтобы вернуть нормальное ХП
          lp.Character:BreakJoints()
       end
    end,
