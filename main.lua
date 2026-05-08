@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 12",
-   LoadingTitle = "ТЕСТ 12: ФИКС ТРЯСКИ",
+   Name = "PlutoniumJus Experiment | ТЕСТ 13",
+   LoadingTitle = "ТЕСТ 13: SHIFT LOCK FLY",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
@@ -12,46 +12,50 @@ _G.GodMode = false
 
 local MainTab = Window:CreateTab("Main")
 
--- НОРМАЛЬНЫЙ ПОЛЕТ (БЕЗ ТРЯСКИ И ПОЛОСОК)
+-- НОВЫЙ ПОЛЕТ С ПРИВЯЗКОЙ К КАМЕРЕ
 MainTab:CreateToggle({
-   Name = "NoClip-Полет (Клавиатура)",
+   Name = "NoClip-Полет (Свободный)",
    CurrentValue = false,
    Callback = function(v)
       _G.FlyEnabled = v
       local lp = game.Players.LocalPlayer
       local runService = game:GetService("RunService")
+      local uis = game:GetService("UserInputService")
       
       task.spawn(function()
          while _G.FlyEnabled do
             local char = lp.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChild("Humanoid")
+            local camera = workspace.CurrentCamera
             
             if hrp and hum then
-               -- Отключаем столкновения
+               -- Проход сквозь стены
                for _, part in pairs(char:GetDescendants()) do
                   if part:IsA("BasePart") then part.CanCollide = false end
                end
                
-               -- Останавливаем падение
                hrp.Velocity = Vector3.new(0, 0, 0)
                
-               -- Рассчитываем движение
-               local moveDir = hum.MoveDirection
-               local flyVec = moveDir * 1.5 -- Скорость вперед/назад
+               -- Читаем ввод клавиш
+               local moveVec = Vector3.new(0,0,0)
+               if uis:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + camera.CFrame.LookVector end
+               if uis:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec - camera.CFrame.LookVector end
+               if uis:IsKeyDown(Enum.KeyCode.A) then moveVec = moveVec - camera.CFrame.RightVector end
+               if uis:IsKeyDown(Enum.KeyCode.D) then moveVec = moveVec + camera.CFrame.RightVector end
                
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
-                  flyVec = flyVec + Vector3.new(0, 1.5, 0)
-               elseif game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
-                  flyVec = flyVec + Vector3.new(0, -1.5, 0)
-               end
+               -- Высота
+               local yMode = 0
+               if uis:IsKeyDown(Enum.KeyCode.Space) then yMode = 1.5
+               elseif uis:IsKeyDown(Enum.KeyCode.LeftControl) then yMode = -1.5 end
                
-               hrp.CFrame = hrp.CFrame + flyVec
+               -- Двигаем и ПОВОРАЧИВАЕМ персонажа за камерой
+               local lookAt = camera.CFrame.LookVector
+               hrp.CFrame = CFrame.new(hrp.Position + (moveVec * 1.5) + Vector3.new(0, yMode, 0), hrp.Position + Vector3.new(lookAt.X, 0, lookAt.Z))
             end
             runService.Heartbeat:Wait()
          end
          
-         -- Возврат физики
          if lp.Character then
             for _, part in pairs(lp.Character:GetDescendants()) do
                if part:IsA("BasePart") then part.CanCollide = true end
@@ -61,9 +65,9 @@ MainTab:CreateToggle({
    end,
 })
 
--- РЕАЛЬНОЕ БЕССМЕРТИЕ
+-- УЛУЧШЕННОЕ БЕССМЕРТИЕ
 MainTab:CreateToggle({
-   Name = "God Mode (0 HP)",
+   Name = "God Mode (Фикс урона)",
    CurrentValue = false,
    Callback = function(v)
       _G.GodMode = v
@@ -72,7 +76,8 @@ MainTab:CreateToggle({
          while _G.GodMode do
             local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
             if hum then
-               hum.Health = 0
+               -- Держим ХП на максимуме и блокируем смерть
+               hum.Health = hum.MaxHealth
                hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
             end
             task.wait()
