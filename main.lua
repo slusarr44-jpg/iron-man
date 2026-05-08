@@ -1,25 +1,26 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 11",
-   LoadingTitle = "ТЕСТ 11: НОРМАЛЬНЫЙ ИНТЕРФЕЙС",
+   Name = "PlutoniumJus Experiment | ТЕСТ 12",
+   LoadingTitle = "ТЕСТ 12: ФИКС ТРЯСКИ",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
 
 _G.FlyEnabled = false
 _G.GodMode = false
-_G.FlySpeed = 50
 
 local MainTab = Window:CreateTab("Main")
 
--- СНАЧАЛА ВКЛЮЧАЛКА
+-- НОРМАЛЬНЫЙ ПОЛЕТ (БЕЗ ТРЯСКИ И ПОЛОСОК)
 MainTab:CreateToggle({
-   Name = "NoClip-Полёт (Клавиатура)",
+   Name = "NoClip-Полет (Клавиатура)",
    CurrentValue = false,
    Callback = function(v)
       _G.FlyEnabled = v
       local lp = game.Players.LocalPlayer
+      local runService = game:GetService("RunService")
+      
       task.spawn(function()
          while _G.FlyEnabled do
             local char = lp.Character
@@ -27,24 +28,30 @@ MainTab:CreateToggle({
             local hum = char and char:FindFirstChild("Humanoid")
             
             if hrp and hum then
+               -- Отключаем столкновения
                for _, part in pairs(char:GetDescendants()) do
                   if part:IsA("BasePart") then part.CanCollide = false end
                end
                
+               -- Останавливаем падение
+               hrp.Velocity = Vector3.new(0, 0, 0)
+               
+               -- Рассчитываем движение
                local moveDir = hum.MoveDirection
-               local velocity = moveDir * _G.FlySpeed
-               local yVel = 0
+               local flyVec = moveDir * 1.5 -- Скорость вперед/назад
                
                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
-                  yVel = _G.FlySpeed
+                  flyVec = flyVec + Vector3.new(0, 1.5, 0)
                elseif game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
-                  yVel = -_G.FlySpeed
+                  flyVec = flyVec + Vector3.new(0, -1.5, 0)
                end
                
-               hrp.Velocity = Vector3.new(velocity.X, yVel, velocity.Z)
+               hrp.CFrame = hrp.CFrame + flyVec
             end
-            task.wait()
+            runService.Heartbeat:Wait()
          end
+         
+         -- Возврат физики
          if lp.Character then
             for _, part in pairs(lp.Character:GetDescendants()) do
                if part:IsA("BasePart") then part.CanCollide = true end
@@ -54,38 +61,23 @@ MainTab:CreateToggle({
    end,
 })
 
--- ПОТОМ ПОЛОСКА (ОТ 0 ДО 100)
-MainTab:CreateSlider({
-   Name = "Скорость полёта",
-   Min = 0,
-   Max = 100,
-   Default = 50,
-   Callback = function(v)
-      _G.FlySpeed = v
-   end,
-})
-
 -- РЕАЛЬНОЕ БЕССМЕРТИЕ
 MainTab:CreateToggle({
-   Name = "Real God Mode (0 HP)",
+   Name = "God Mode (0 HP)",
    CurrentValue = false,
    Callback = function(v)
       _G.GodMode = v
       local lp = game.Players.LocalPlayer
-      if _G.GodMode then
-         task.spawn(function()
-            while _G.GodMode do
-               local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
-               if hum then
-                  hum.Health = 0 
-                  hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-               end
-               task.wait()
+      task.spawn(function()
+         while _G.GodMode do
+            local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
+            if hum then
+               hum.Health = 0
+               hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
             end
-         end)
-      else
-         lp.Character:BreakJoints()
-      end
+            task.wait()
+         end
+      end)
    end,
 })
 
