@@ -1,51 +1,82 @@
-local player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
+-- [[ PlutoniumJus Experiment: NDS Edition ]] --
 
--- ИНТЕРФЕЙС (Белый, прозрачный)
-local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local frame = Instance.new("Frame", sg)
-frame.Size = UDim2.new(0, 220, 0, 130)
-frame.Position = UDim2.new(0.5, -110, 0.5, -65)
-frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-frame.BackgroundTransparency = 0.4
-frame.Active = true
-frame.Draggable = true
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({
+    Name = "PlutoniumJus Experiment", 
+    HidePremium = false, 
+    SaveConfig = true, 
+    ConfigFolder = "NDS_Experiment"
+})
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 30)
-title.Text = "RUSTAM - NO COOLDOWN"
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(0, 0, 0)
+-- Глобальные переменные для управления функциями
+_G.ESP_Enabled = false
 
-local cdBtn = Instance.new("TextButton", frame)
-cdBtn.Size = UDim2.new(0.9, 0, 0, 40)
-cdBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
-cdBtn.Text = "УБРАТЬ КД (COOLDOWN)"
-cdBtn.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-
--- ЛОГИКА УДАЛЕНИЯ КД
-cdBtn.MouseButton1Click:Connect(function()
-    print("Попытка сброса КД...")
-    
-    -- 1. Обнуляем все цифровые таймеры в игроке
-    for _, v in pairs(player:GetDescendants()) do
-        if v:IsA("NumberValue") or v:IsA("IntValue") then
-            if v.Name:lower():find("cooldown") or v.Name:lower():find("timer") or v.Name:lower():find("wait") then
-                v.Value = 0
+-- Функция для отрисовки ВХ (ESP)
+local function applyESP(player)
+    if player ~= game.Players.LocalPlayer then
+        player.CharacterAdded:Connect(function(character)
+            if _G.ESP_Enabled then
+                task.wait(0.5)
+                if not character:FindFirstChild("ESPHighlight") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "ESPHighlight"
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.Parent = character
+                end
             end
-        end
+        end)
     end
-    
-    -- 2. Сбрасываем атрибуты (часто КД на смену костюма сидит тут)
-    local char = player.Character
-    if char then
-        for name, _ in pairs(char:GetAttributes()) do
-            if name:lower():find("cooldown") or name:lower():find("can") then
-                char:SetAttribute(name, 0)
-                char:SetAttribute("CanSpawn", true) -- Пытаемся разрешить спавн сразу
-            end
-        end
-    end
-    
-    print("КД сброшен (если он был локальным)!")
-end)
+end
+
+-- Вкладка Main (как на скрине)
+local MainTab = Window:MakeTab({
+	Name = "Main",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+MainTab:AddSection({
+	Name = "Visuals"
+})
+
+-- Переключатель ВХ
+MainTab:AddToggle({
+	Name = "Enable ESP (ВХ)",
+	Default = false,
+	Callback = function(Value)
+		_G.ESP_Enabled = Value
+		if Value then
+			-- Включаем подсветку для тех, кто уже на карте
+			for _, player in pairs(game.Players:GetPlayers()) do
+				if player ~= game.Players.LocalPlayer and player.Character then
+					if not player.Character:FindFirstChild("ESPHighlight") then
+						local highlight = Instance.new("Highlight")
+						highlight.Name = "ESPHighlight"
+						highlight.FillColor = Color3.fromRGB(255, 0, 0)
+						highlight.Parent = player.Character
+					end
+				end
+			end
+		else
+			-- Удаляем подсветку
+			for _, player in pairs(game.Players:GetPlayers()) do
+				if player.Character and player.Character:FindFirstChild("ESPHighlight") then
+					player.Character.ESPHighlight:Destroy()
+				end
+			end
+		end
+	end    
+})
+
+-- Обработка новых игроков, которые заходят на сервер
+game.Players.PlayerAdded:Connect(applyESP)
+
+MainTab:AddSection({
+	Name = "Misc"
+})
+
+-- Заглушка для следующих функций
+MainTab:AddLabel("Следующие на очереди: Fly и GodMode")
+
+OrionLib:Init()
