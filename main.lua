@@ -2,18 +2,19 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "PlutoniumJus Experiment",
-   LoadingTitle = "Загрузка для Основы...",
-   LoadingSubtitle = "by Rustam (Смотри не отлети!)",
+   LoadingTitle = "Тест на Основе",
+   LoadingSubtitle = "by Rustam",
    ConfigurationSaving = { Enabled = false }
 })
 
 _G.ESP_Enabled = false
 _G.FlingEnabled = false
-_G.NoClipEnabled = false
+_G.FlyEnabled = false
 _G.FlySpeed = 20
 
--- ВХ (ESP)
+-- ВКЛАДКА MAIN
 local MainTab = Window:CreateTab("Main")
+
 MainTab:CreateToggle({
    Name = "Enable ESP (ВХ)",
    CurrentValue = false,
@@ -24,7 +25,8 @@ MainTab:CreateToggle({
             for _, p in pairs(game.Players:GetPlayers()) do
                if p ~= game.Players.LocalPlayer and p.Character then
                   if not p.Character:FindFirstChild("Highlight") then
-                     Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
+                     local h = Instance.new("Highlight", p.Character)
+                     h.FillColor = Color3.fromRGB(255, 0, 0)
                   end
                end
             end
@@ -37,44 +39,51 @@ MainTab:CreateToggle({
    end,
 })
 
--- ДВИЖЕНИЕ (Walking Fly)
+-- ВКЛАДКА MOVEMENT
 local MoveTab = Window:CreateTab("Movement")
+
 MoveTab:CreateSlider({
-   Name = "Скорость полета",
-   Min = 16, Max = 100, Default = 20,
-   Callback = function(v) _G.FlySpeed = v end,
+   Name = "Скорость ходьбы/полета",
+   Min = 16,
+   Max = 200,
+   Default = 20,
+   Callback = function(v)
+      _G.FlySpeed = v
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
+      end
+   end,
 })
 
 MoveTab:CreateToggle({
-   Name = "Walking Fly (Полет как ходьба)",
+   Name = "AirWalk (Ходить по воздуху)",
    CurrentValue = false,
    Callback = function(v)
-      _G.NoClipEnabled = v
+      _G.FlyEnabled = v
       local lp = game.Players.LocalPlayer
-      local char = lp.Character or lp.CharacterAdded:Wait()
-      local hum = char:WaitForChild("Humanoid")
-      local hrp = char:WaitForChild("HumanoidRootPart")
-
       task.spawn(function()
-         while _G.NoClipEnabled do
-            local dir = hum.MoveDirection
-            hrp.Velocity = dir * _G.FlySpeed + Vector3.new(0, 2, 0) -- Небольшая поддержка в воздухе
-            
-            -- Проход сквозь стены
-            for _, part in pairs(char:GetDescendants()) do
-               if part:IsA("BasePart") then part.CanCollide = false end
+         while _G.FlyEnabled do
+            local char = lp.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+               -- Создаем невидимый пол под ногами
+               local ray = RaycastParams.new()
+               char.HumanoidRootPart.Velocity = Vector3.new(char.HumanoidRootPart.Velocity.X, 0, char.HumanoidRootPart.Velocity.Z)
+               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
+                  char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1, 0)
+               end
+               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
+                  char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -1, 0)
+               end
             end
             task.wait()
-         end
-         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = true end
          end
       end)
    end,
 })
 
--- COMBAT (Fling)
+-- ВКЛАДКА COMBAT
 local CombatTab = Window:CreateTab("Combat")
+
 CombatTab:CreateToggle({
    Name = "Fling (Вышибала)",
    CurrentValue = false,
@@ -83,7 +92,7 @@ CombatTab:CreateToggle({
       task.spawn(function()
          while _G.FlingEnabled do
             local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-            hrp.AngularVelocity = Vector3.new(0, 99999, 0) -- Бешеное вращение (невидимое)
+            hrp.AngularVelocity = Vector3.new(0, 99999, 0)
             hrp.Velocity = Vector3.new(500, 500, 500)
             task.wait(0.1)
             hrp.Velocity = Vector3.new(0, 0, 0)
