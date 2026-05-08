@@ -1,24 +1,20 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment",
-   LoadingTitle = "Rustam Edition",
-   LoadingSubtitle = "by slusarr44",
+   Name = "PlutoniumJus Experiment | ТЕСТ 2",
+   LoadingTitle = "ТЕСТ 2: ОСНОВА",
+   LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
 
 _G.ESP_Enabled = false
 _G.FlingEnabled = false
 _G.AirWalkEnabled = false
+_G.GodModeEnabled = false
 _G.FlySpeed = 20
 
--- Вкладка Home для порядка
-local HomeTab = Window:CreateTab("Home", 4483362458) 
-HomeTab:CreateLabel("Привет, Рустам! Твой кот Тёма следит за читами.")
-
--- ВКЛАДКА MAIN (ВХ)
-local MainTab = Window:CreateTab("Main", 4483345998)
-
+-- ВКЛАДКА MAIN
+local MainTab = Window:CreateTab("Main")
 MainTab:CreateToggle({
    Name = "Enable ESP (ВХ)",
    CurrentValue = false,
@@ -29,8 +25,7 @@ MainTab:CreateToggle({
             for _, p in pairs(game.Players:GetPlayers()) do
                if p ~= game.Players.LocalPlayer and p.Character then
                   if not p.Character:FindFirstChild("Highlight") then
-                     local h = Instance.new("Highlight", p.Character)
-                     h.FillColor = Color3.fromRGB(255, 0, 0)
+                     Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
                   end
                end
             end
@@ -43,12 +38,11 @@ MainTab:CreateToggle({
    end,
 })
 
--- ВКЛАДКА MOVEMENT (ПОЛЕТ)
-local MoveTab = Window:CreateTab("Movement", 4483345998)
-
+-- ВКЛАДКА MOVEMENT
+local MoveTab = Window:CreateTab("Movement")
 MoveTab:CreateSlider({
-   Name = "Скорость",
-   Min = 16, Max = 200, Default = 20,
+   Name = "Скорость ходьбы/полета",
+   Min = 16, Max = 750, Default = 20,
    Callback = function(v) 
       _G.FlySpeed = v 
       if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -67,15 +61,11 @@ MoveTab:CreateToggle({
          while _G.AirWalkEnabled do
             local char = lp.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
-               local hrp = char.HumanoidRootPart
-               -- Замораживаем по оси Y (чтобы не падать)
-               hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
-               
-               -- Управление высотой
+               char.HumanoidRootPart.Velocity = Vector3.new(char.HumanoidRootPart.Velocity.X, 0, char.HumanoidRootPart.Velocity.Z)
                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
-                  hrp.CFrame = hrp.CFrame * CFrame.new(0, 1.5, 0)
+                  char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 1.5, 0)
                elseif game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
-                  hrp.CFrame = hrp.CFrame * CFrame.new(0, -1.5, 0)
+                  char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -1.5, 0)
                end
             end
             task.wait()
@@ -84,8 +74,25 @@ MoveTab:CreateToggle({
    end,
 })
 
--- ВКЛАДКА COMBAT (ФЛИНГ)
-local CombatTab = Window:CreateTab("Combat", 4483345998)
+-- ВКЛАДКА COMBAT
+local CombatTab = Window:CreateTab("Combat")
+
+CombatTab:CreateToggle({
+   Name = "God Mode (Бессмертие)",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.GodModeEnabled = v
+      local lp = game.Players.LocalPlayer
+      task.spawn(function()
+         while _G.GodModeEnabled do
+            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+               lp.Character.Humanoid.Health = lp.Character.Humanoid.MaxHealth
+            end
+            task.wait(0.1)
+         end
+      end)
+   end,
+})
 
 CombatTab:CreateToggle({
    Name = "Fling (Вышибала)",
@@ -94,15 +101,11 @@ CombatTab:CreateToggle({
       _G.FlingEnabled = v
       task.spawn(function()
          while _G.FlingEnabled do
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-               local hrp = char.HumanoidRootPart
-               -- Крутимся бешено
-               hrp.AngularVelocity = Vector3.new(0, 999999, 0)
-               hrp.Velocity = Vector3.new(1000, 1000, 1000)
-               task.wait(0.1)
-               hrp.Velocity = Vector3.new(0, 0, 0)
-            end
+            local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+            hrp.AngularVelocity = Vector3.new(0, 999999, 0)
+            hrp.Velocity = Vector3.new(1000, 1000, 1000)
+            task.wait(0.1)
+            hrp.Velocity = Vector3.new(0, 0, 0)
             task.wait()
          end
       end)
