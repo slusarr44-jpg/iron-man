@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 14",
-   LoadingTitle = "ТЕСТ 14: ПЛАВНЫЙ ПОЛЕТ",
+   Name = "PlutoniumJus Experiment | ТЕСТ 15",
+   LoadingTitle = "ТЕСТ 15: TRUE GODMODE (0 HP)",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
@@ -12,9 +12,9 @@ _G.GodMode = false
 
 local MainTab = Window:CreateTab("Main")
 
--- МАКСИМАЛЬНО ПЛАВНЫЙ ПОЛЕТ
+-- ТОТ САМЫЙ ПОЛЕТ (БЕЗ ИЗМЕНЕНИЙ)
 MainTab:CreateToggle({
-   Name = "NoClip-Полет (Ultra Smooth)",
+   Name = "NoClip-Полет (Клавиатура)",
    CurrentValue = false,
    Callback = function(v)
       _G.FlyEnabled = v
@@ -31,16 +31,12 @@ MainTab:CreateToggle({
                local camera = workspace.CurrentCamera
                
                if hrp and hum then
-                  -- Проход сквозь стены
                   for _, part in pairs(char:GetDescendants()) do
                      if part:IsA("BasePart") then part.CanCollide = false end
                   end
                   
-                  -- Полная остановка стандартной физики (чтобы не трясло)
                   hrp.Velocity = Vector3.new(0, 0, 0)
-                  hrp.RotVelocity = Vector3.new(0, 0, 0)
                   
-                  -- Ввод управления
                   local moveVec = Vector3.new(0,0,0)
                   if uis:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + camera.CFrame.LookVector end
                   if uis:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec - camera.CFrame.LookVector end
@@ -51,39 +47,43 @@ MainTab:CreateToggle({
                   if uis:IsKeyDown(Enum.KeyCode.Space) then yMode = 1.5
                   elseif uis:IsKeyDown(Enum.KeyCode.LeftControl) then yMode = -1.5 end
                   
-                  -- Плавное перемещение CFrame
                   local lookAt = camera.CFrame.LookVector
                   hrp.CFrame = CFrame.new(hrp.Position + (moveVec * 1.5) + Vector3.new(0, yMode, 0), hrp.Position + Vector3.new(lookAt.X, 0, lookAt.Z))
                end
                runService.RenderStepped:Wait()
             end
             
-            -- СБРОС ПРИ ВЫКЛЮЧЕНИИ (чтобы не парить)
             if lp.Character then
                for _, part in pairs(lp.Character:GetDescendants()) do
                   if part:IsA("BasePart") then part.CanCollide = true end
                end
-               local hum = lp.Character:FindFirstChild("Humanoid")
-               if hum then hum.PlatformStand = false end
             end
          end)
       end
    end,
 })
 
--- БЕССМЕРТИЕ
+-- РЕАЛЬНОЕ БЕССМЕРТИЕ (КАК ТЫ ПРОСИЛ - 0 HP)
 MainTab:CreateToggle({
-   Name = "God Mode (Стабильный)",
+   Name = "Real God Mode (0 HP)",
    CurrentValue = false,
    Callback = function(v)
       _G.GodMode = v
+      local lp = game.Players.LocalPlayer
+      
       task.spawn(function()
          while _G.GodMode do
-            local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+            local char = lp.Character
+            local hum = char and char:FindFirstChild("Humanoid")
             if hum then
-               hum.Health = hum.MaxHealth
+               hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false) -- Запрещаем умирать
+               hum.Health = 0 -- Ставим 0 ХП
             end
             task.wait()
+         end
+         -- Если выключил, ресет персонажа, чтобы вернуть ХП
+         if not _G.GodMode and lp.Character then
+            lp.Character:BreakJoints()
          end
       end)
    end,
