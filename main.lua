@@ -1,16 +1,16 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus | TOTAL UPDATE 34",
-   LoadingTitle = "ЗАГРУЗКА РЕЖИМА ТОНИ",
-   LoadingSubtitle = "by Рустам Слюсар",
+   Name = "PlutoniumJus Experiment | ТЕСТ 19 MOD",
+   LoadingTitle = "ТЕСТ 19: REBORN",
+   LoadingSubtitle = "by Rustam",
    ConfigurationSaving = { Enabled = false }
 })
 
 _G.FlyEnabled = false
 _G.GodMode = false
 _G.ESP = false
-_G.Noclip = false
+_G.NoFall = true -- Включено по умолчанию
 
 local lp = game.Players.LocalPlayer
 
@@ -19,11 +19,24 @@ local function getChar()
     return char, char:WaitForChild("HumanoidRootPart", 5), char:WaitForChild("Humanoid", 5)
 end
 
--- ВКЛАДКА MAIN (ТВОЯ БАЗА)
-local MainTab = Window:CreateTab("Главная")
+-- Авто-удаление урона от падения (NDS Fix)
+task.spawn(function()
+    while true do
+        if _G.NoFall then
+            local char = lp.Character
+            if char and char:FindFirstChild("FallDamageScript") then
+                char.FallDamageScript:Destroy()
+            end
+        end
+        task.wait(1)
+    end
+end)
 
+local MainTab = Window:CreateTab("Main")
+
+-- ПОЛЕТ
 MainTab:CreateToggle({
-   Name = "NoClip-Полет (Тони Старк)",
+   Name = "NoClip-Полет",
    CurrentValue = false,
    Callback = function(v)
       _G.FlyEnabled = v
@@ -68,46 +81,52 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateToggle({
-   Name = "Real God Mode (0 HP)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.GodMode = v
+-- ТОРНАДО И КИДАЛКА (С ФИКСОМ ЭРОРОВ)
+local CombatTab = Window:CreateTab("Combat")
+
+CombatTab:CreateButton({
+   Name = "FE Super Ring (Торнадо)",
+   Callback = function()
       task.spawn(function()
-          while _G.GodMode do
-             local char, hrp, hum = getChar()
-             if hum then
-                hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-                hum.Health = 0
-             end
-             task.wait(0.1)
-          end
+          loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconBABA/code/refs/heads/main/FE-SUPE-RING.lua"))()
       end)
    end,
 })
 
--- ВКЛАДКА DESTRUCTION (ТО, ЧТО ТЫ ПРОСИЛ)
-local DestructTab = Window:CreateTab("Разнос")
-
-DestructTab:CreateButton({
-   Name = "FE Super Ring (Торнадо)",
+CombatTab:CreateButton({
+   Name = "Fling (Кидалка)",
    Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconBABA/code/refs/heads/main/FE-SUPE-RING.lua"))()
+      task.spawn(function()
+          loadstring(game:HttpGet("https://raw.githubusercontent.com/InvisibleFling/Main/main/Fling.lua"))()
+      end)
    end,
 })
 
-DestructTab:CreateButton({
-   Name = "Кидалка (Fling)",
-   Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/InvisibleFling/Main/main/Fling.lua"))()
+-- СТАТЫ
+local StatsTab = Window:CreateTab("Stats")
+
+StatsTab:CreateSlider({
+   Name = "Speed",
+   Range = {16, 500},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(v)
+      local _, _, hum = getChar()
+      if hum then hum.WalkSpeed = v end
    end,
 })
 
--- ВКЛАДКА VISUALS
-local VisTab = Window:CreateTab("Визуалы")
+StatsTab:CreateToggle({
+   Name = "No Fall Damage",
+   CurrentValue = true,
+   Callback = function(v) _G.NoFall = v end,
+})
+
+-- ESP
+local VisTab = Window:CreateTab("Visuals")
 
 VisTab:CreateToggle({
-   Name = "ESP (ВХ)",
+   Name = "ESP",
    CurrentValue = false,
    Callback = function(v)
       _G.ESP = v
@@ -116,8 +135,7 @@ VisTab:CreateToggle({
              while _G.ESP do
                 for _, p in pairs(game.Players:GetPlayers()) do
                    if p ~= lp and p.Character and not p.Character:FindFirstChild("Highlight") then
-                      local h = Instance.new("Highlight", p.Character)
-                      h.FillColor = Color3.fromRGB(255, 0, 0)
+                      Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
                    end
                 end
                 task.wait(1)
@@ -131,25 +149,4 @@ VisTab:CreateToggle({
           end
       end
    end,
-})
-
--- ВКЛАДКА UTILS (ДЛЯ СТАТОВ)
-local UtilsTab = Window:CreateTab("Утилиты")
-
-UtilsTab:CreateSlider({
-   Name = "Скорость (Max Verstappen)",
-   Range = {16, 500},
-   Increment = 1,
-   CurrentValue = 16,
-   Callback = function(v)
-      local char, hrp, hum = getChar()
-      if hum then hum.WalkSpeed = v end
-   end,
-})
-
-Rayfield:Notify({
-   Title = "Готово!",
-   Content = "Рустам, старый Rayfield вернулся со всеми функциями! Тёме привет!",
-   Duration = 5,
-   Image = 4483362458,
 })
