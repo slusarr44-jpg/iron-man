@@ -1,83 +1,75 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Experiment | ТЕСТ 22",
-   LoadingTitle = "ТЕСТ 22: FLING + TORNADO",
+   Name = "PlutoniumJus Experiment | ТЕСТ 23",
+   LoadingTitle = "ТЕСТ 23: FIX FLING & TORNADO",
    LoadingSubtitle = "by Рустам",
    ConfigurationSaving = { Enabled = false }
 })
 
-_G.FlingAura = false
-_G.Tornado = false
+_G.FlingActive = false
+_G.TornadoActive = false
 local lp = game.Players.LocalPlayer
+local power = 500 -- Сила из твоего нового кода
 
 local MainTab = Window:CreateTab("Main")
 
--- 1. ОТКИДЫВАЛКА (YEET АУРА)
+-- 1. ТА САМАЯ ОТКИДЫВАЛКА (ИЗ ТВОЕГО КОДА)
 MainTab:CreateToggle({
-   Name = "Fling Aura (Откидывать людей)",
+   Name = "FE Fling (Откидывалка)",
    CurrentValue = false,
    Callback = function(v)
-      _G.FlingAura = v
-      task.spawn(function()
-         while _G.FlingAura do
-            local char = lp.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-               -- Создаем безумную силу вращения для флинга
-               local velocity = hrp:FindFirstChild("FlingSpin") or Instance.new("BodyAngularVelocity", hrp)
-               velocity.Name = "FlingSpin"
-               velocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-               velocity.AngularVelocity = Vector3.new(0, 9999, 0) -- Скорость вращения из твоего кода
-
-               -- Поиск цели рядом
-               for _, player in pairs(game.Players:GetPlayers()) do
-                  if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                     local targetHrp = player.Character.HumanoidRootPart
-                     if (targetHrp.Position - hrp.Position).Magnitude < 8 then
-                        -- Резкий рывок в сторону цели для срабатывания физики
-                        hrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, 0.5)
-                     end
-                  end
+      _G.FlingActive = v
+      if v then
+         -- Отключаем коллизию своего тела, чтобы не улетать самому
+         local conn
+         conn = game:GetService("RunService").Stepped:Connect(function()
+            if not _G.FlingActive then conn:Disconnect() return end
+            if lp.Character then
+               for _, part in pairs(lp.Character:GetDescendants()) do
+                  if part:IsA("BasePart") then part.CanCollide = false end
                end
             end
-            game:GetService("RunService").Heartbeat:Wait()
-         end
-         -- Очистка при выключении
-         if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-            local spin = lp.Character.HumanoidRootPart:FindFirstChild("FlingSpin")
-            if spin then spin:Destroy() end
-         end
-      end)
+         end)
+         
+         task.spawn(function()
+            local hrp = lp.Character:WaitForChild("HumanoidRootPart")
+            local thrust = Instance.new("BodyThrust", hrp)
+            thrust.Name = "FlingForce"
+            thrust.Force = Vector3.new(power, 0, power)
+            thrust.Location = hrp.Position
+            
+            while _G.FlingActive do
+               task.wait()
+            end
+            if thrust then thrust:Destroy() end
+         end)
+      end
    end,
 })
 
--- 2. ТОРНАДО (ВРАЩЕНИЕ ОБЛОМКОВ)
+-- 2. ТОРНАДО (ПРИТЯГИВАНИЕ)
 MainTab:CreateToggle({
-   Name = "Tornado (Крутить обломки)",
+   Name = "Tornado (Притягивать обломки)",
    CurrentValue = false,
    Callback = function(v)
-      _G.Tornado = v
+      _G.TornadoActive = v
       task.spawn(function()
-         local angle = 0
-         while _G.Tornado do
+         while _G.TornadoActive do
             local char = lp.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             if hrp then
-               angle = angle + 0.2
                for _, part in pairs(workspace:GetDescendants()) do
                   if part:IsA("BasePart") and not part:IsDescendantOf(char) and not part.Anchored then
                      local dist = (part.Position - hrp.Position).Magnitude
-                     if dist < 30 then
-                        -- Математика вращения обломков вокруг тебя
-                        local x = math.cos(angle) * 15
-                        local z = math.sin(angle) * 15
-                        part.Velocity = (Vector3.new(hrp.Position.X + x, hrp.Position.Y + 5, hrp.Position.Z + z) - part.Position) * 10
+                     if dist < 40 then
+                        -- Теперь они летят К ТЕБЕ, а не ОТ ТЕБЯ
+                        part.Velocity = (hrp.Position - part.Position).Unit * 50
                      end
                   end
                end
             end
-            task.wait(0.05)
+            task.wait(0.1)
          end
       end)
    end,
