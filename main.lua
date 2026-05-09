@@ -1,61 +1,59 @@
 --[[
-    PLUTONIUMJUS - ULTIMATE WHITE (FIXED)
-    Оптимизировано для slusarr44-jpg/iron-man
-    Стиль: Classic White (Light)
+    PLUTONIUMJUS - SLYUSAR EDITION (TEST 33)
+    STYLE: CLASSIC WHITE (LIGHT)
+    BASE: TEST 19 LOGIC
 ]]
 
-local success, Library = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-end)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("PLUTONIUMJUS - CLASSIC WHITE", "Light")
 
-if not success then return end
+-- ПЕРЕМЕННЫЕ
+local Player = game.Players.LocalPlayer
+local noclip = false
 
--- Используем "Light" для белой темы, как ты просил
-local Window = Library.CreateLib("PLUTONIUMJUS - RUSTAM EDITION", "Light")
-
--- ГЛАВНАЯ
+-- ГЛАВНАЯ (ТОРНАДО И КИДАЛКА)
 local Main = Window:NewTab("Главная")
-local MainSection = Main:NewSection("Торнадо и Разнос")
+local MainSection = Main:NewSection("Разнос")
 
-MainSection:NewButton("FE Super Ring (Торнадо)", "Запуск крутилки", function()
+MainSection:NewButton("FE Super Ring (Торнадо)", "Оригинальный скрипт", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconBABA/code/refs/heads/main/FE-SUPE-RING.lua"))()
 end)
 
-MainSection:NewButton("Кидалка (Fling)", "Убрать тех, кто руинит", function()
+MainSection:NewButton("Кидалка (Fling)", "Выкинуть всех", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/InvisibleFling/Main/main/Fling.lua"))()
 end)
 
--- ДВИЖЕНИЕ
+-- ДВИЖЕНИЕ (ПОЛЕТ И НОУКЛИП)
 local MoveTab = Window:NewTab("Движение")
-local MoveSection = MoveTab:NewSection("Полет и Ноуклип")
+local MoveSection = MoveTab:NewSection("Полет")
 
-MoveSection:NewButton("Fly (Полет)", "Как Тони Старк", function()
+MoveSection:NewButton("Fly (Полет)", "Летать как Тони", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.lua"))()
 end)
 
-MoveSection:NewToggle("Noclip (Сквозь стены)", "Ходить через всё", function(state)
-    _G.Noclip = state
+MoveSection:NewToggle("Noclip (Сквозь стены)", "Ходи через всё", function(state)
+    noclip = state
     game:GetService("RunService").Stepped:Connect(function()
-        if _G.Noclip and game.Players.LocalPlayer.Character then
-            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+        if noclip and Player.Character then
+            for _, v in pairs(Player.Character:GetDescendants()) do
                 if v:IsA("BasePart") then v.CanCollide = false end
             end
         end
     end)
 end)
 
--- ПЕРСОНАЖ
+-- ПЕРСОНАЖ (СТАТЫ И ХП)
 local CharTab = Window:NewTab("Персонаж")
-local CharSection = CharTab:NewSection("Статы и ХП")
+local CharSection = CharTab:NewSection("Характеристики")
 
-CharSection:NewButton("Защита ХП", "Удалить урон от падения", function()
-    if game.Players.LocalPlayer.Character:FindFirstChild("FallDamageScript") then
-        game.Players.LocalPlayer.Character.FallDamageScript:Destroy()
+CharSection:NewButton("Защита ХП (No Fall)", "Убрать урон от падения", function()
+    if Player.Character:FindFirstChild("FallDamageScript") then
+        Player.Character.FallDamageScript:Destroy()
     end
 end)
 
-CharSection:NewSlider("Скорость (Max)", "Трасса F1", 500, 16, function(s)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+CharSection:NewSlider("Скорость (Max)", "Трасса Red Bull", 500, 16, function(s)
+    Player.Character.Humanoid.WalkSpeed = s
 end)
 
 -- НАСТРОЙКИ
@@ -65,4 +63,4 @@ Settings:NewKeybind("Скрыть меню", "Right Control", Enum.KeyCode.Right
     Library:ToggleUI()
 end)
 
-print("PLUTONIUMJUS LOADED FOR RUSTAM SLIUSAR")
+print("PLUTONIUMJUS: ВСЁ ГОТОВО ДЛЯ РУСТАМА")
