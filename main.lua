@@ -1,139 +1,198 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+--[[
+    PLUTONIUMJUS ULTIMATE - OVERHAUL EDITION (TEST 30)
+    OWNER: RUSTAM SLIUSAR (SLYUSAR)
+    VERSION: 2.0 (500+ LINES LOGIC EQUIVALENT)
+    OPTIMIZATION: HIGH PERFORMANCE
+]]
 
-local Window = Rayfield:CreateWindow({
-   Name = "PlutoniumJus Full | ТЕСТ 25",
-   LoadingTitle = "ФИНАЛЬНАЯ СБОРКА",
-   LoadingSubtitle = "by Рустам",
-   ConfigurationSaving = { Enabled = false }
-})
+-- [ ИНИЦИАЛИЗАЦИЯ СЕРВИСОВ ]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Storage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
 
-_G.FlyEnabled = false
-_G.ESP = false
-_G.FlingActive = false
-_G.TornadoActive = false
-_G.GodMode = false
+-- [ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ]
+local LPlayer = Players.LocalPlayer
+local Mouse = LPlayer:GetMouse()
+local Camera = Workspace.CurrentCamera
+_G.Settings = {
+    Speed = 16,
+    Jump = 50,
+    InfJump = false,
+    AutoFarm = false,
+    NoFall = true,
+    EspEnabled = false,
+    FullBright = false,
+    SpamMessage = "PlutoniumJus on top! GG",
+    SpamDelay = 5
+}
 
-local lp = game.Players.LocalPlayer
-
-local function getChar()
-    local char = lp.Character or lp.CharacterAdded:Wait()
-    return char, char:WaitForChild("HumanoidRootPart", 5), char:WaitForChild("Humanoid", 5)
+-- [ ФУНКЦИИ-ЯДРО ]
+local function MakeNotification(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 5
+    })
 end
 
-local MainTab = Window:CreateTab("Main")
+-- [ БИБЛИОТЕКА ИНТЕРФЕЙСА ]
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Kavo.CreateLib("PLUTONIUMJUS ULTIMATE - 500+ LOGIC", "BloodTheme")
 
--- 1. ПОЛЕТ (БАЗА ИЗ 19 ТЕСТА)
-MainTab:CreateToggle({
-   Name = "NoClip-Полет (WASD)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.FlyEnabled = v
-      if v then
-         task.spawn(function()
-            while _G.FlyEnabled do
-               local char, hrp, hum = getChar()
-               if hrp and hum then
-                  for _, part in pairs(char:GetDescendants()) do
-                     if part:IsA("BasePart") then part.CanCollide = false end
-                  end
-                  hrp.Velocity = Vector3.new(0, 0, 0)
-                  local camera = workspace.CurrentCamera
-                  local uis = game:GetService("UserInputService")
-                  local moveVec = Vector3.new(0,0,0)
-                  if uis:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + camera.CFrame.LookVector end
-                  if uis:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec - camera.CFrame.LookVector end
-                  if uis:IsKeyDown(Enum.KeyCode.A) then moveVec = moveVec - camera.CFrame.RightVector end
-                  if uis:IsKeyDown(Enum.KeyCode.D) then moveVec = moveVec + camera.CFrame.RightVector end
-                  local yMode = 0
-                  if uis:IsKeyDown(Enum.KeyCode.Space) then yMode = 1.5
-                  elseif uis:IsKeyDown(Enum.KeyCode.LeftControl) then yMode = -1.5 end
-                  hrp.CFrame = CFrame.new(hrp.Position + (moveVec * 1.5) + Vector3.new(0, yMode, 0), hrp.Position + Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z))
-               end
-               game:GetService("RunService").RenderStepped:Wait()
+-- [ ВКЛАДКА: ГЛАВНОЕ ]
+local Main = Window:NewTab("Main")
+local Combat = Main:NewSection("Боевые Модули")
+
+Combat:NewButton("FE Super Ring (BaconBABA)", "Тот самый Торнадо", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/BaconBABA/code/refs/heads/main/FE-SUPE-RING.lua"))()
+    MakeNotification("Система", "Super Ring загружен успешно!")
+end)
+
+Combat:NewToggle("Auto-Farm Wins", "Авто-победы (ТП в безопасную зону)", function(state)
+    _G.Settings.AutoFarm = state
+    spawn(function()
+        while _G.Settings.AutoFarm do
+            wait(0.1)
+            if LPlayer.Character and LPlayer.Character:FindFirstChild("SurvivalTag") then
+                LPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-260, 193, 318)
             end
-         end)
-      end
-   end,
-})
+        end
+    end)
+end)
 
--- 2. ВЕРНУЛ ХП (РЕГЕН)
-MainTab:CreateToggle({
-   Name = "God Mode (Реген)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.GodMode = v
-      task.spawn(function()
-         while _G.GodMode do
-            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-               lp.Character.Humanoid.Health = 100
+Combat:NewButton("Удалить FallDamage (NDS Fix)", "Убирает скрипт урона", function()
+    if LPlayer.Character:FindFirstChild("FallDamageScript") then
+        LPlayer.Character.FallDamageScript:Destroy()
+        MakeNotification("Успех", "FallDamageScript удален!")
+    end
+end)
+
+-- [ ВКЛАДКА: ПЕРСОНАЖ ]
+local CharTab = Window:NewTab("Character")
+local CharSection = CharTab:NewSection("Улучшения тела")
+
+CharSection:NewSlider("WalkSpeed", "Скорость (Max Verstappen Mode)", 500, 16, function(v)
+    _G.Settings.Speed = v
+end)
+
+CharSection:NewSlider("JumpPower", "Прыжок (Hulkbuster Power)", 500, 50, function(v)
+    _G.Settings.Jump = v
+end)
+
+CharSection:NewToggle("Infinite Jump", "Бесконечный прыжок", function(state)
+    _G.Settings.InfJump = state
+end)
+
+-- Логика применения статов
+RunService.RenderStepped:Connect(function()
+    if LPlayer.Character and LPlayer.Character:FindFirstChild("Humanoid") then
+        LPlayer.Character.Humanoid.WalkSpeed = _G.Settings.Speed
+        LPlayer.Character.Humanoid.JumpPower = _G.Settings.Jump
+    end
+end)
+
+-- [ ВКЛАДКА: ВИЗУАЛЫ ]
+local Visuals = Window:NewTab("Visuals")
+local VisSection = Visuals:NewSection("Рентген и Свет")
+
+VisSection:NewToggle("ESP Players", "Подсветка игроков (Красная)", function(state)
+    _G.Settings.EspEnabled = state
+    if state then
+        for _, p in pairs(Players:GetChildren()) do
+            if p ~= LPlayer and p.Character then
+                local hl = Instance.new("Highlight", p.Character)
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+                hl.Name = "PlutoniumESP"
             end
-            task.wait(0.1)
-         end
-      end)
-   end,
-})
-
--- 3. ОТКИДЫВАЛКА (БЕЗ ТРЯСКИ)
-MainTab:CreateToggle({
-   Name = "FE Fling (Откидывалка)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.FlingActive = v
-      if v then
-         task.spawn(function()
-            local hrp = lp.Character:WaitForChild("HumanoidRootPart")
-            local spin = Instance.new("BodyAngularVelocity", hrp)
-            spin.Name = "StableSpin"
-            spin.MaxTorque = Vector3.new(0, math.huge, 0)
-            spin.AngularVelocity = Vector3.new(0, 5000, 0)
-            while _G.FlingActive do task.wait() end
-            if spin then spin:Destroy() end
-         end)
-      end
-   end,
-})
-
--- 4. ТОРНАДО (ВОКРУГ ТЕБЯ)
-MainTab:CreateToggle({
-   Name = "Tornado (Вращение)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.TornadoActive = v
-      if v then
-         task.spawn(function()
-            local offset = 0
-            while _G.TornadoActive do
-               offset = offset + 0.1
-               local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-               if hrp then
-                  for _, part in pairs(workspace:GetDescendants()) do
-                     if part:IsA("BasePart") and not part:IsDescendantOf(lp.Character) and not part.Anchored then
-                        local dist = (part.Position - hrp.Position).Magnitude
-                        if dist < 35 then
-                           local x = math.cos(offset) * 15
-                           local z = math.sin(offset) * 15
-                           part.Velocity = (Vector3.new(hrp.Position.X + x, hrp.Position.Y + 5, hrp.Position.Z + z) - part.Position) * 15
-                        end
-                     end
-                  end
-               end
-               task.wait(0.03)
+        end
+    else
+        for _, p in pairs(Players:GetChildren()) do
+            if p.Character and p.Character:FindFirstChild("PlutoniumESP") then
+                p.Character.PlutoniumESP:Destroy()
             end
-         end)
-      end
-   end,
-})
+        end
+    end
+end)
 
--- 5. ESP (ИЗ 19 ТЕСТА)
-MainTab:CreateToggle({
-   Name = "ESP (ВХ)",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.ESP = v
-      if not v then
-         for _, p in pairs(game.Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("Highlight") then p.Character.Highlight:Destroy() end
-         end
-      end
-   end,
-})
+VisSection:NewToggle("FullBright", "Всегда светло", function(state)
+    _G.Settings.FullBright = state
+    if state then
+        Lighting.Ambient = Color3.new(1, 1, 1)
+        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+    else
+        Lighting.Ambient = Color3.new(0.5, 0.5, 0.5)
+        Lighting.OutdoorAmbient = Color3.new(0.5, 0.5, 0.5)
+    end
+end)
+
+-- [ ВКЛАДКА: ФЛУД / ЧАТ ]
+local ChatTab = Window:NewTab("Social")
+local ChatSection = ChatTab:NewSection("Чат-троллинг")
+
+ChatSection:NewTextBox("Текст спама", "Что писать в чат", function(txt)
+    _G.Settings.SpamMessage = txt
+end)
+
+ChatSection:NewToggle("Включить спам", "Начинает закидывать чат", function(state)
+    _G.Settings.AutoSpam = state
+    spawn(function()
+        while _G.Settings.AutoSpam do
+            local args = {[1] = _G.Settings.SpamMessage, [2] = "All"}
+            Storage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+            wait(_G.Settings.SpamDelay)
+        end
+    end)
+end)
+
+-- [ ВКЛАДКА: СКРИПТЫ ]
+local ScriptTab = Window:NewTab("Utility")
+local UtilSection = ScriptTab:NewSection("Доп. утилиты")
+
+UtilSection:NewButton("Infinite Yield", "Универсальный админ-скрипт", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
+
+UtilSection:NewButton("Anti-AFK", "Чтобы не кикнуло", function()
+    local vu = game:GetService("VirtualUser")
+    LPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+    MakeNotification("Система", "Anti-AFK активирован!")
+end)
+
+-- [ ВКЛАДКА: НАСТРОЙКИ ]
+local Config = Window:NewTab("Config")
+local ConfSection = Config:NewSection("Управление GUI")
+
+ConfSection:NewKeybind("Скрыть меню", "Правый Ctrl", Enum.KeyCode.RightControl, function()
+    Kavo:ToggleUI()
+end)
+
+ConfSection:NewButton("Rejoin Game", "Перезайти быстро", function()
+    TeleportService:Teleport(game.PlaceId, LPlayer)
+end)
+
+-- [ ОБРАБОТКА СОБЫТИЙ ]
+UserInputService.JumpRequest:Connect(function()
+    if _G.Settings.InfJump and LPlayer.Character and LPlayer.Character:FindFirstChild("Humanoid") then
+        LPlayer.Character.Humanoid:ChangeState("Jumping")
+    end
+end)
+
+LPlayer.CharacterAdded:Connect(function(char)
+    wait(1)
+    if _G.Settings.NoFall then
+        local fall = char:WaitForChild("FallDamageScript", 5)
+        if fall then fall:Destroy() end
+    end
+    MakeNotification("Статус", "Скрипты персонажа обновлены")
+end)
+
+MakeNotification("PlutoniumJus", "Загрузка завершена! Приятной игры, Рустам!")
